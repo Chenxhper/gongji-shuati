@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -712,7 +712,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 {"id": "real_2021_0003", "type": "multi", "category": "管理", "stem": "越来越多的外国人认为中国是世界上最安全的国家之一，更有西方学者总结出高安全感的优势：即总 揽全局、协调各方的领导优势，组织多个部门齐抓共管的体制优势及动员群众共同参与的工作优势。 这彰显出（ ）。", "options": ["社会主义制度下能集中力量办大事的制度优势", "国家治理体系的日益完善和国家治理能力的不断提高", "我国人民代表大会制度的国体保障了人民当家作主", "人民政协积极履行政治协商、民主监督的国家职能"], "answer": [0, 1], "explain": "(2021年宁波事业单位考试真题)", "source": "2021年真题"},
 {"id": "real_2021_0004", "type": "multi", "category": "经济", "stem": "贸易制裁（Trade sanction）是一国或数国政府通过法令对另一国采取强硬措施，以断绝相互之间的经 济和贸易关系的行为。西方一些发达国家频繁使用贸易救济措施制裁别国的做法（ ）。", "options": ["表明经济全球化阻碍了国家经济的发展", "表明经济全球化加剧了全球经济的不稳定性", "会阻碍世界范围内资源配置效率的提高", "违背了世贸组织的自由贸易和公平竞争原则"], "answer": [2, 3], "explain": "(2021年宁波事业单位考试真题)", "source": "2021年真题"},
 {"id": "real_2021_0005", "type": "multi", "category": "历史", "stem": "西安是国务院公布的首批国家历史文化名城，历史上有周、秦、汉、隋、唐等在内的13个朝代在此建 都，（ ）都曾是其历史名称。", "options": ["镐京", "西京", "临安", "长安"], "answer": [0, 1, 3], "explain": "(2021年宁波事业单位考试真题)", "source": "2021年真题"}
-];const LS_PROFILES_KEY = "gk-profiles";
+];
+QUESTION_BANK.forEach(q => q._uid = q.id + "|" + q.type);
+const LS_PROFILES_KEY = "gk-profiles";
 const LS_DATA_PREFIX = "gk-data-";
 function getLSKey(name) { return LS_DATA_PREFIX + name; }
 let state = {
@@ -729,13 +731,13 @@ function loadState() {
     const s = JSON.parse(localStorage.getItem(getLSKey(state.currentProfile)));
     if (s) {
       state.history = s.history||{};
-      state.wrongIds = (s.wrongIds||[]).filter(id => QUESTION_BANK.some(q => q.id === id));
+      state.wrongIds = (s.wrongIds||[]).filter(id => QUESTION_BANK.some(q => q._uid === id));
       state.currentCategory = s.currentCategory||"全部";
       state.currentMode = s.currentMode||"practice";
       state.currentType = s.currentType||"all";
       const clean = {};
       for (const [id, v] of Object.entries(state.history)) {
-        if (QUESTION_BANK.some(q => q.id === id)) clean[id] = v;
+        if (QUESTION_BANK.some(q => q._uid === id)) clean[id] = v;
       }
       state.history = clean;
     }
@@ -818,7 +820,7 @@ function buildPool() {
   let p = QUESTION_BANK;
   if (state.currentCategory !== "全部") p = p.filter(q => q.category === state.currentCategory);
   if (state.currentType !== "all") p = p.filter(q => q.type === state.currentType);
-  if (state.currentMode === "review") p = p.filter(q => state.wrongIds.includes(q.id));
+  if (state.currentMode === "review") p = p.filter(q => state.wrongIds.includes(q._uid));
   return p;
 }
 function pickRandom(p) { return p.length ? p[Math.floor(Math.random()*p.length)] : null; }
@@ -829,7 +831,7 @@ function getStats() {
 }
 function getCatStats() {
   const r = {}; getCategories().filter(c=>c!=="全部").forEach(c=>{r[c]={total:0,correct:0}});
-  QUESTION_BANK.forEach(q => { const h = state.history[q.id]; if (h) { r[q.category].total++; if (h.correct) r[q.category].correct++; } });
+  QUESTION_BANK.forEach(q => { const h = state.history[q._uid]; if (h) { r[q.category].total++; if (h.correct) r[q.category].correct++; } });
   return r;
 }
 
@@ -839,7 +841,7 @@ function renderCategories() {
     const a = c === state.currentCategory ? " active":"";
     const t = c === "全部" ? QUESTION_BANK.length : (cnt[c]||0);
     const pool = c === "全部" ? QUESTION_BANK : QUESTION_BANK.filter(q=>q.category===c);
-    const d = pool.filter(q=>state.history[q.id]).length;
+    const d = pool.filter(q=>state.history[q._uid]).length;
     return `<button class="cat-btn${a}" data-cat="${c}">${c}<span class="count">${d}/${t}</span></button>`;
   }).join("");
   $("categories").querySelectorAll(".cat-btn").forEach(b => {
@@ -918,9 +920,9 @@ function handleAnswer(selected) {
   const cSet = new Set(q.answer); const sSet = new Set(selected);
   let correct = q.type === "multi" ? (cSet.size === sSet.size && [...cSet].every(v=>sSet.has(v))) : (selected.length===1 && cSet.has(selected[0]));
 
-  state.history[q.id] = { correct, timestamp: Date.now() };
-  if (correct) state.wrongIds = state.wrongIds.filter(id => id !== q.id);
-  else if (!state.wrongIds.includes(q.id)) state.wrongIds.push(q.id);
+  state.history[q._uid] = { correct, timestamp: Date.now() };
+  if (correct) state.wrongIds = state.wrongIds.filter(id => id !== q._uid);
+  else if (!state.wrongIds.includes(q._uid)) state.wrongIds.push(q._uid);
   saveState();
 
   document.querySelectorAll("#options .option").forEach((opt,i) => {
