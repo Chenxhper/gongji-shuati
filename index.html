@@ -100,6 +100,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 <script>
 const QUESTION_BANK = JSON.parse(document.getElementById('questions-data').textContent);
 QUESTION_BANK.forEach(q => q._uid = q.id + '|' + q.type);
+const LS_PROFILES_KEY = "gk-profiles";
+const LS_DATA_PREFIX = "gk-data-";
+function getLSKey(name) { return LS_DATA_PREFIX + name; }
 let state = {
   history: {},
   wrongIds: [],
@@ -375,6 +378,7 @@ function init() {
   if (!state.currentCategory) state.currentCategory = "全部";
   if (!state.currentMode) state.currentMode = "practice";
   if (!state.currentType) state.currentType = "all";
+  $("search-input").value = state.searchText;
   renderProfileBar(); renderCategories(); renderTypeFilter(); renderModeToggle(); renderHeaderStats(); renderStatsPanel();
 
   $("btn-clear-wrong").addEventListener("click", () => {
